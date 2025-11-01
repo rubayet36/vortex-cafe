@@ -9,6 +9,7 @@
     --accent-color: #ef4444;
     --green: #198754;
     --blue: #0d6efd;
+    --red: #dc3545;
     --border-color: #dee2e6;
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
@@ -146,4 +147,192 @@ body {
 @media (max-width: 768px) {
     .toolbar, .filters { flex-direction: column; align-items: stretch; }
     .sales-grid { grid-template-columns: 1fr; }
+}
+
+/* --- ADD THESE STYLES TO THE BOTTOM OF owner-dashboard.css --- */
+
+/* Profit text color */
+.summary-card .profit {
+    color: var(--green); /* Green by default */
+}
+.summary-card .profit.negative {
+    color: var(--red); /* Red if profit is negative */
+}
+
+/* Expense Section */
+.expense-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+.expense-form-card, .expense-list-card {
+    background-color: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow);
+}
+.expense-form-card h3, .expense-list-card h3 {
+    margin-bottom: 1.5rem;
+}
+
+/* Expense Form */
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-group label {
+    display: block;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+/* --- owner-dashboard.css --- */
+
+/* REPLACE your existing .expense-form .btn rule with this one.
+  This is a more aggressive reset to force the correct style.
+*/
+.expense-form .btn {
+    /* Reset Browser Styles */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: none;
+    box-shadow: none;
+
+    /* Color & Background */
+    background-color: var(--accent-color); /* The red color */
+    color: white;
+
+    /* Sizing & Spacing */
+    width: 100%;
+    padding: 0.8rem 1.5rem; /* Makes the button larger */
+    margin-top: 1rem;
+
+    /* Font & Text */
+    font-size: 1.1rem;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    justify-content: center;
+
+    /* Aesthetics (to match "Today" button) */
+    border-radius: 0.5rem; /* This is the 8px rounded corner */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* This should now work as expected */
+.expense-form .btn:hover {
+    background-color: var(--accent-hover); /* Darker red on hover */
+}
+/* Expense List */
+#expense-list {
+    list-style: none;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.btn-primary {
+    background-color: var(--accent-color); /* This is your red accent color */
+    color: white;
+}
+.expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+.expense-item:last-child {
+    border-bottom: none;
+}
+.expense-details .description {
+    font-weight: 500;
+}
+.expense-details .category {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background-color: #f8f9fa;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+.expense-amount {
+    font-weight: 600;
+    color: var(--red);
+    white-space: nowrap;
+    margin-left: 1rem;
+}
+
+
+@media (max-width: 900px) {
+    .expense-section {
+        grid-template-columns: 1fr;
+    }
+}
+/* --- ADD THIS TO THE BOTTOM OF owner-dashboard.css --- */
+
+/* Space out the new export button */
+#export-btn {
+    margin-left: 1rem;
+}
+/* --- ADD THESE STYLES TO THE BOTTOM of owner-dashboard.css --- */
+
+/* Style for the new Export button */
+#export-btn {
+    margin-left: 0.5rem;
+    background-color: #6c757d; /* A neutral gray */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem; /* Match filter button padding */
+    font-size: 0.9rem; /* Match filter button font size */
+    border-radius: 0.5rem; /* Match filter button radius */
+}
+#export-btn:hover {
+    background-color: #5a6268;
+}
+
+/* Fix for the "Log Expense" button */
+.expense-form-card .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 1rem;
+    padding: 0.8rem 1.5rem; /* Makes it taller */
+    font-size: 1.1rem;
+    font-weight: 500;
+    
+    background-color: var(--accent-color); /* This is your red color */
+    color: white;
+    border: none; /* This makes it flat */
+    border-radius: 0.5rem; /* Matches your "Today" button */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.expense-form-card .btn:hover {
+    background-color: var(--accent-hover); /* Darker red on hover */
+}
+/* --- ADD THESE STYLES TO THE BOTTOM of owner-dashboard.css --- */
+
+/* Default style for profit (green) */
+.summary-card .profit {
+    color: var(--green); /* Uses the green color variable from your CSS */
+}
+
+/* Style for negative profit (red) */
+.summary-card .profit.negative {
+    color: var(--red); /* Uses the red color variable from your CSS */
 }

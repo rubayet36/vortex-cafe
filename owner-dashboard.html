@@ -12,7 +12,7 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-container">
-                 <img src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png" alt="Vortex Logo" class="logo-image">
+                <img src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png" alt="Vortex Logo" class="logo-image">
                 <h1>Owner Dashboard</h1>
             </div>
             <a href="index.html" class="logout-btn">Logout</a>
@@ -21,12 +21,15 @@
 
     <main class="container">
         <div class="toolbar">
-            <h2 class="title">Transaction Analytics</h2>
+            <h2 class="title">Business Analytics</h2>
             <div class="filters">
                 <button class="filter-btn active" data-range="today">Today</button>
                 <button class="filter-btn" data-range="week">This Week</button>
                 <button class="filter-btn" data-range="month">This Month</button>
                 <input type="text" id="date-range-picker" placeholder="Select Date Range">
+                <button id="export-btn" class="btn btn-secondary">
+            <i data-lucide="download"></i> Export
+        </button>
             </div>
         </div>
 
@@ -44,18 +47,55 @@
                     <h4>Total Orders</h4>
                     <p id="total-orders">0</p>
                 </div>
+                <div class="summary-card">
+                    <h4>Net Profit</h4>
+                    <p id="net-profit" class="profit">৳0.00</p>
+                </div>
             </div>
 
             <div class="sales-grid">
                 <div class="sales-list-card">
                     <h3>Most Sold Items</h3>
-                    <ul id="most-sold-list">
-                        </ul>
+                    <ul id="most-sold-list"></ul>
                 </div>
                 <div class="sales-list-card">
                     <h3>Least Sold Items</h3>
-                    <ul id="least-sold-list">
-                        </ul>
+                    <ul id="least-sold-list"></ul>
+                </div>
+            </div>
+            
+            <div class="expense-section">
+                <div class="expense-form-card">
+                    <h3>Log an Expense</h3>
+                    <form id="expense-form">
+                        <div class="form-group">
+                            <label for="expense-description">Description *</label>
+                            <input type="text" id="expense-description" required>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="expense-amount">Amount (৳) *</label>
+                                <input type="number" id="expense-amount" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-category">Category</label>
+                                <select id="expense-category">
+                                    <option>Supplies</option>
+                                    <option>Utilities</option>
+                                    <option>Rent</option>
+                                    <option>Salaries</option>
+                                    <option>Marketing</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Log Expense</button>
+                    </form>
+                </div>
+                <div class="expense-list-card">
+                    <h3>Expenses for Period</h3>
+                    <ul id="expense-list"></ul>
+                    <p id="no-expenses-msg" class="empty-message">No expenses logged for this period.</p>
                 </div>
             </div>
         </div>

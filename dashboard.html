@@ -11,8 +11,8 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-container">
-                 <img src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png" alt="Vortex Logo" class="logo-image">
-                <h1>Staff Dashboard</h1>
+                <img src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png" alt="Vortex Logo" class="logo-image">
+                <h1>VORTEX - Staff Dashboard</h1>
             </div>
             <a href="index.html" class="logout-btn">Logout</a>
         </div>
@@ -44,8 +44,22 @@
         <div id="orders-section" class="tab-content active">
             <h2 class="title">Current Orders</h2>
             <div id="loading-orders" class="loading-spinner"><div class="spinner"></div></div>
-            <div id="orders-grid" class="orders-grid"></div>
-            <p id="no-orders-msg" class="empty-message hidden">No active orders at the moment.</p>
+            
+            <div class="kanban-board">
+                <div class="kanban-column">
+                    <h3 class="kanban-title" style="--status-color: var(--blue);">New Orders</h3>
+                    <div id="orders-col-not-taken" class="kanban-dropzone">
+                        <p id="no-orders-msg" class="empty-message">No new orders.</p>
+                    </div>
+                </div>
+                
+                <div class="kanban-column">
+                    <h3 class="kanban-title" style="--status-color: #ffc107;">Awaiting Pickup</h3>
+                    <div id="orders-col-payment-complete" class="kanban-dropzone">
+                        <p class="empty-message">No orders awaiting pickup.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="transactions-section" class="tab-content">
@@ -67,7 +81,16 @@
                 <input type="hidden" id="item-id">
                 <div class="form-grid"><div class="form-group"><label for="name">Name *</label><input type="text" id="name" required></div><div class="form-group"><label for="category">Category *</label><select id="category" required><option>Smoothies</option><option>Protein Bowls</option><option>Meals</option><option>Snacks</option><option>Supplements</option></select></div></div>
                 <div class="form-group"><label for="description">Description *</label><textarea id="description" rows="3" required></textarea></div>
-                <div class="form-grid"><div class="form-group"><label for="price">Price *</label><input type="number" id="price" step="0.01" required></div><div class="form-group"><label for="image">Image</label><input type="file" id="image" accept="image/*"><span id="current-image" class="current-image-text"></span></div></div>
+                
+                <div class="form-grid">
+                    <div class="form-group"><label for="price">Price *</label><input type="number" id="price" step="0.01" required></div>
+                    <div class="form-group form-group-checkbox"><label for="is_popular">Mark as Popular Item</label><input type="checkbox" id="is_popular" class="checkbox-toggle"></div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group"><label for="image">Image</label><input type="file" id="image" accept="image/*"><span id="current-image" class="current-image-text"></span></div>
+                </div>
+
                 <h4 class="form-section-title">Nutritional Information</h4>
                 <div class="form-grid grid-four-cols"><div class="form-group"><label for="calories">Calories</label><input type="number" id="calories"></div><div class="form-group"><label for="protein">Protein (g)</label><input type="number" id="protein"></div><div class="form-group"><label for="carbohydrates">Carbs (g)</label><input type="number" id="carbohydrates"></div><div class="form-group"><label for="fats">Fats (g)</label><input type="number" id="fats"></div></div>
                 <div class="form-grid grid-four-cols"><div class="form-group"><label for="fiber">Fiber (g)</label><input type="number" id="fiber"></div><div class="form-group"><label for="sugar">Sugar (g)</label><input type="number" id="sugar"></div><div class="form-group"><label for="sodium">Sodium (mg)</label><input type="number" id="sodium"></div></div>
@@ -77,6 +100,8 @@
             </form>
         </div>
     </div>
+    
+    <audio id="notification-sound" src="https://actions.google.com/sounds/v1/alarms/notification_high_intensity.ogg" preload="auto"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="dashboard.js"></script>
