@@ -3,12 +3,10 @@ const SUPABASE_URL = 'https://ybrdqxetprlhscfuebyy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicmRxeGV0cHJsaHNjZnVlYnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MTg2NjksImV4cCI6MjA3NzQ5NDY2OX0.N7pxPNmi1ZowVd9Nik9KABhqTtp3NP-XlEcEiNlJ-8M';
 
 
+
 const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- DOM Elements ---
-// ... (other selectors like expenseForm, expenseList, etc.)
-
-const exportBtn = document.getElementById('export-btn'); // <-- ADD THIS LINE
 const loading = document.getElementById('loading');
 const analyticsContent = document.getElementById('analytics-content');
 const noDataMsg = document.getElementById('no-data-msg');
@@ -16,12 +14,13 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 const totalRevenueEl = document.getElementById('total-revenue');
 const totalOrdersEl = document.getElementById('total-orders');
 const netProfitEl = document.getElementById('net-profit');
-const mostSoldList = document.getElementById('most-sold-list');
-const leastSoldList = document.getElementById('least-sold-list');
+const mostSoldList = document.getElementById('most-sold-list'); // This is now Top Revenue
+const mostSoldQuantityList = document.getElementById('most-sold-quantity-list'); // This is now Top Quantity
 const dateRangePickerEl = document.getElementById('date-range-picker');
 const expenseForm = document.getElementById('expense-form');
 const expenseList = document.getElementById('expense-list');
 const noExpensesMsg = document.getElementById('no-expenses-msg');
+const exportBtn = document.getElementById('export-btn');
 
 // --- Date Picker Initialization ---
 const datePicker = flatpickr(dateRangePickerEl, {
@@ -45,14 +44,14 @@ async function fetchAndDisplayAnalytics(startDate, endDate) {
     endDate.setHours(23, 59, 59, 999);
 
     try {
+        // Fetch orders and expenses
         const [ordersResponse, expensesResponse] = await Promise.all([
-            supabase.from('orders').select('id, total_amount').eq('status', 'Delivery Complete').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
+            supabase.from('orders').select('id, total_amount, created_at').eq('status', 'Delivery Complete').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
             supabase.from('expenses').select('*').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString())
         ]);
         
         const { data: orders, error: ordersError } = ordersResponse;
         const { data: expenses, error: expensesError } = expensesResponse;
-
         if (ordersError) throw ordersError;
         if (expensesError) throw expensesError;
 
@@ -62,6 +61,7 @@ async function fetchAndDisplayAnalytics(startDate, endDate) {
             return;
         }
 
+        // --- Calculate Summary Stats ---
         const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
         const netProfit = totalRevenue - totalExpenses;
@@ -71,22 +71,43 @@ async function fetchAndDisplayAnalytics(startDate, endDate) {
         totalOrdersEl.textContent = totalOrders;
         netProfitEl.textContent = `৳${netProfit.toFixed(2)}`;
         netProfitEl.classList.toggle('negative', netProfit < 0);
-        
+
         renderExpenseList(expenses);
         
+        // --- Fetch and process item sales ---
         const orderIds = orders.map(order => order.id);
         if (orderIds.length > 0) {
-            const { data: items, error: itemsError } = await supabase.from('order_items').select('item_name, quantity').in('order_id', orderIds);
+            // UPDATED: Fetch price_at_order
+            const { data: items, error: itemsError } = await supabase
+                .from('order_items')
+                .select('item_name, quantity, price_at_order') 
+                .in('order_id', orderIds);
             if (itemsError) throw itemsError;
 
-            const itemCounts = items.reduce((acc, item) => {
-                acc[item.item_name] = (acc[item.item_name] || 0) + item.quantity;
+            // UPDATED: Calculate both quantity and revenue
+            const itemAnalytics = items.reduce((acc, item) => {
+                const name = item.item_name;
+                if (!acc[name]) {
+                    acc[name] = { quantity: 0, revenue: 0 };
+                }
+                acc[name].quantity += item.quantity;
+                acc[name].revenue += item.quantity * item.price_at_order;
                 return acc;
             }, {});
-            const sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
-            renderSalesLists(sortedItems);
+
+            // Create two sorted lists
+            const sortedByRevenue = Object.entries(itemAnalytics)
+                .map(([name, data]) => ({ name, revenue: data.revenue }))
+                .sort((a, b) => b.revenue - a.revenue);
+
+            const sortedByQuantity = Object.entries(itemAnalytics)
+                .map(([name, data]) => ({ name, quantity: data.quantity }))
+                .sort((a, b) => b.quantity - a.quantity);
+
+            // Pass both lists to the render function
+            renderSalesLists(sortedByRevenue, sortedByQuantity);
         } else {
-            renderSalesLists([]); // Render empty lists if no orders
+            renderSalesLists([], []); // Render empty lists if no orders
         }
 
         analyticsContent.classList.remove('hidden');
@@ -100,19 +121,28 @@ async function fetchAndDisplayAnalytics(startDate, endDate) {
 }
 
 /**
- * Renders the lists of most and least sold items.
+ * UPDATED: Renders both sales lists (Revenue and Quantity).
  */
-function renderSalesLists(sortedItems) {
-    mostSoldList.innerHTML = '';
-    leastSoldList.innerHTML = '';
-    if (sortedItems.length === 0) return;
-    const mostSold = sortedItems.slice(0, 5);
-    const leastSold = sortedItems.slice(-5).reverse();
-    mostSold.forEach(([name, count]) => {
-        mostSoldList.innerHTML += `<li><span>${name}</span> <span>${count} sold</span></li>`;
+function renderSalesLists(sortedByRevenue, sortedByQuantity) {
+    mostSoldList.innerHTML = ''; // Top Revenue list
+    mostSoldQuantityList.innerHTML = ''; // Top Quantity list
+
+    if (sortedByRevenue.length === 0) {
+        mostSoldList.innerHTML = '<li>No sales data</li>';
+        mostSoldQuantityList.innerHTML = '<li>No sales data</li>';
+        return;
+    }
+
+    // Populate Top Revenue List (Top 5)
+    const topRevenue = sortedByRevenue.slice(0, 5);
+    topRevenue.forEach(item => {
+        mostSoldList.innerHTML += `<li><span>${item.name}</span> <span>৳${item.revenue.toFixed(2)}</span></li>`;
     });
-    leastSold.forEach(([name, count]) => {
-        leastSoldList.innerHTML += `<li><span>${name}</span> <span>${count} sold</span></li>`;
+
+    // Populate Top Quantity List (Top 5)
+    const topQuantity = sortedByQuantity.slice(0, 5);
+    topQuantity.forEach(item => {
+        mostSoldQuantityList.innerHTML += `<li><span>${item.name}</span> <span>${item.quantity} sold</span></li>`;
     });
 }
 
@@ -138,44 +168,6 @@ function renderExpenseList(expenses) {
         `;
         expenseList.appendChild(li);
     });
-}
-/**
- * Converts an array of objects into a CSV formatted string.
- */
-function convertToCSV(data) {
-    if (data.length === 0) return '';
-    const headers = Object.keys(data[0]);
-    const headerRow = headers.join(',');
-    
-    const rows = data.map(row => {
-        return headers.map(header => {
-            let cell = row[header] === null || row[header] === undefined ? '' : row[header];
-            cell = String(cell);
-            if (cell.search(/("|,|\n)/g) >= 0) {
-                cell = `"${cell.replace(/"/g, '""')}"`;
-            }
-            return cell;
-        }).join(',');
-    });
-
-    return [headerRow, ...rows].join('\n');
-}
-
-/**
- * Triggers a browser download for the given CSV content.
- */
-function downloadCSV(csvContent, filename) {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
 }
 
 
@@ -228,7 +220,6 @@ function setupEventListeners() {
             alert('Failed to log expense.');
         } else {
             expenseForm.reset();
-            // Refresh the whole dashboard to reflect the new expense
             document.querySelector('.filter-btn.active').click();
         }
 
@@ -239,9 +230,8 @@ function setupEventListeners() {
     exportBtn.addEventListener('click', async () => {
         exportBtn.disabled = true;
         exportBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Exporting...';
-        lucide.createIcons(); // Re-render icon
+        lucide.createIcons();
 
-        // 1. Determine the current date range
         let startDate, endDate = new Date();
         const activeFilterBtn = document.querySelector('.filter-btn.active');
         
@@ -268,7 +258,6 @@ function setupEventListeners() {
         endDate.setHours(23, 59, 59, 999);
 
         try {
-            // 2. Fetch all data for the range
             const [ordersResponse, expensesResponse] = await Promise.all([
                 supabase.from('orders').select('created_at, total_amount, customer_name').eq('status', 'Delivery Complete').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString()),
                 supabase.from('expenses').select('*').gte('created_at', startDate.toISOString()).lte('created_at', endDate.toISOString())
@@ -279,7 +268,6 @@ function setupEventListeners() {
 
             if (ordersError || expensesError) throw ordersError || expensesError;
             
-            // 3. Format data into a unified structure
             const revenueData = orders.map(order => ({
                 Date: new Date(order.created_at).toLocaleString(),
                 Description: `Order from ${order.customer_name}`,
@@ -292,13 +280,12 @@ function setupEventListeners() {
                 Date: new Date(expense.created_at).toLocaleString(),
                 Description: expense.description,
                 Category: expense.category,
-                Amount: -expense.amount, // Show expenses as negative numbers
+                Amount: -expense.amount,
                 Type: 'Expense'
             }));
             
             const combinedData = [...revenueData, ...expenseData].sort((a, b) => new Date(a.Date) - new Date(b.Date));
             
-            // 4. Convert to CSV and download
             if (combinedData.length > 0) {
                 const csvContent = convertToCSV(combinedData);
                 const filename = `Vortex_Report_${new Date().toISOString().split('T')[0]}.csv`;
@@ -318,6 +305,44 @@ function setupEventListeners() {
     });
 }
 
+/**
+ * Converts an array of objects into a CSV formatted string.
+ */
+function convertToCSV(data) {
+    if (data.length === 0) return '';
+    const headers = Object.keys(data[0]);
+    const headerRow = headers.join(',');
+    
+    const rows = data.map(row => {
+        return headers.map(header => {
+            let cell = row[header] === null || row[header] === undefined ? '' : row[header];
+            cell = String(cell);
+            if (cell.search(/("|,|\n)/g) >= 0) {
+                cell = `"${cell.replace(/"/g, '""')}"`;
+            }
+            return cell;
+        }).join(',');
+    });
+
+    return [headerRow, ...rows].join('\n');
+}
+
+/**
+ * Triggers a browser download for the given CSV content.
+ */
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
 
 // --- Initial Load ---
 document.addEventListener('DOMContentLoaded', () => {
