@@ -21,3 +21,29 @@ document.addEventListener('DOMContentLoaded', () => {
   window.lucide?.createIcons();
   startAutoRefresh();
 });
+// main.js — login handler for Staff Portal
+
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("loginForm");
+
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    // Hardcoded login simulation
+    if (email === "mahin@mail.com" && password === "pass") {
+      window.location.href = "owner-dashboard.html";
+    } else if (email === "admin@mail.com" && password === "pass") {
+      window.location.href = "dashboard.html";
+    } else {
+      alert("Invalid credentials. Please try again.");
+    }
+  });
+});
