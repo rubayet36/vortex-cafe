@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="menue.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
+    /* === Smooth Theme Transition === */
     body, .menu-card, .modal-content, .search-input, .category-btn {
       transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
     }
@@ -18,39 +19,46 @@
 </head>
 <body>
 
-  <header class="sticky-header">
-    <div class="header-content">
-      <div class="logo-container">
-        <img
-          src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png"
-          alt="Vortex Logo"
-          class="logo-image"
-        />
-        <h1 class="logo-title">Cafe Menu</h1>
-      </div>
-
-      <div class="header-buttons">
-        <a
-          href="../Suppliment/index.html"
-          target="_blank"
-          id="supplements-btn"
-          class="category-btn"
-        >
-          Supplements Portal
-        </a>
-
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
-          <i data-lucide="moon"></i>
-        </button>
-
-        <button id="cart-button" class="cart-button" aria-label="Open cart">
-          <i data-lucide="shopping-cart"></i>
-          <span id="cart-item-count" class="cart-item-count hidden">0</span>
-        </button>
-      </div>
+  <!-- === HEADER === -->
+<header class="sticky-header">
+  <div class="header-content">
+    <!-- Left: logo + title -->
+    <div class="logo-container">
+      <img
+        src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png"
+        alt="Vortex Logo"
+        class="logo-image"
+      />
+      <h1 class="logo-title">Cafe Menu</h1>
     </div>
-  </header>
 
+    <!-- Right: actions (all in one flex row) -->
+    <div class="header-buttons">
+      <a
+        href="../Suppliment/index.html"
+        target="_blank"
+        id="supplements-btn"
+        class="category-btn"
+      >
+        Supplements Portal
+      </a>
+
+      <!-- 🌙 DARK MODE TOGGLE -->
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <i data-lucide="moon"></i>
+      </button>
+
+      <!-- 🛒 CART BUTTON -->
+      <button id="cart-button" class="cart-button" aria-label="Open cart">
+        <i data-lucide="shopping-cart"></i>
+        <span id="cart-item-count" class="cart-item-count hidden">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+
+  <!-- === MAIN CONTENT === -->
   <main class="main-content">
     <div class="filters-container">
       <div class="search-wrapper">
@@ -77,6 +85,7 @@
     </div>
   </main>
 
+  <!-- === CART MODAL === -->
   <div id="cart-modal" class="modal-overlay hidden">
     <div class="modal-content cart-modal-content">
       <div class="modal-header">
@@ -87,10 +96,12 @@
     </div>
   </div>
 
+  <!-- === ORDER TRACKING MODAL === -->
   <div id="order-tracking-modal" class="modal-overlay hidden">
     <div id="order-tracking-content" class="modal-content"></div>
   </div>
 
+  <!-- === TEMPLATES === -->
   <template id="menu-item-template">
     <div class="menu-card">
       <div class="card-image-container">
@@ -101,27 +112,10 @@
       <div class="card-content">
         <div class="card-header">
           <h3 class="card-title"></h3>
+          <span class="card-price"></span>
         </div>
         <p class="card-description"></p>
         <div class="card-nutrition-summary"></div>
-
-        <div class="size-selection">
-          <label class="size-option">
-            <input type="radio" name="size" value="regular" checked>
-            <span class="size-label">
-              <span class="size-name">Regular</span>
-              <span class="size-price"></span>
-            </span>
-          </label>
-          <label class="size-option">
-            <input type="radio" name="size" value="large">
-            <span class="size-label">
-              <span class="size-name">Large</span>
-              <span class="size-price"></span>
-            </span>
-          </label>
-        </div>
-
         <div class="card-actions">
           <button class="add-to-cart-btn"><i data-lucide="plus" class="icon-sm"></i> Add to Cart</button>
           <button class="info-btn"><i data-lucide="info" class="icon-md"></i></button>
@@ -139,7 +133,6 @@
       </div>
       <div class="cart-item-details">
         <h3 class="cart-item-title"></h3>
-        <p class="cart-item-size"></p>
         <p class="cart-item-price-each"></p>
         <div class="cart-item-quantity-controls">
           <button class="quantity-btn minus-btn"><i data-lucide="minus"></i></button>
@@ -152,15 +145,18 @@
     </div>
   </template>
 
+  <!-- === SCRIPTS === -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 
+  <!-- === DARK MODE + SMOOTH TRANSITION SCRIPT === -->
   <script>
     lucide.createIcons();
 
     const themeToggle = document.getElementById('theme-toggle');
     const body = document.body;
 
+    // Apply saved theme preference
     if (localStorage.getItem('theme') === 'dark') {
       body.classList.add('dark-mode');
       themeToggle.querySelector('i').setAttribute('data-lucide', 'sun');
@@ -168,6 +164,7 @@
     }
 
     themeToggle.addEventListener('click', () => {
+      // Add transition class for smooth effect
       body.classList.add('theme-fade');
 
       const isDark = body.classList.toggle('dark-mode');
@@ -175,6 +172,7 @@
       lucide.createIcons();
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
+      // Remove fade class after transition ends
       setTimeout(() => body.classList.remove('theme-fade'), 600);
     });
   </script>

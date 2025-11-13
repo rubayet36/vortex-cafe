@@ -23,10 +23,9 @@
   </header>
 
   <main class="container">
-    <!-- Filters -->
     <section class="filters-card">
       <div class="filters-left">
-        <button class="filter-btn" data-range="today">Today</button>
+        <button class="filter-btn active" data-range="today">Today</button>
         <button class="filter-btn" data-range="7d">Last 7 days</button>
         <button class="filter-btn" data-range="30d">Last 30 days</button>
         <button class="filter-btn" data-range="custom">Custom</button>
@@ -38,7 +37,6 @@
       </div>
     </section>
 
-    <!-- Top Summary -->
     <section class="summary-grid">
       <div class="summary-card">
         <div class="summary-icon bg-cyan"><i data-lucide="banknote"></i></div>
@@ -55,17 +53,16 @@
         </div>
       </div>
       <div class="summary-card">
-        <div class="summary-icon bg-amber"><i data-lucide="chart-line"></i></div>
+        <div class="summary-icon bg-amber"><i data-lucide="trending-up"></i></div>
         <div>
-          <p class="summary-label">Supplements Profit*</p>
+          <p class="summary-label">Supplements Profit</p>
           <p id="net-profit" class="summary-value">৳0.00</p>
-          <p class="muted">*Selling − Buying (supplements only) − expenses</p>
         </div>
       </div>
       <div class="summary-card">
-        <div class="summary-icon bg-red"><i data-lucide="triangle-alert"></i></div>
+        <div class="summary-icon bg-red"><i data-lucide="alert-triangle"></i></div>
         <div>
-          <p class="summary-label">Low Stock (Supp.)</p>
+          <p class="summary-label">Low Stock Items</p>
           <p id="low-stock-count" class="summary-value">0</p>
         </div>
       </div>
@@ -73,53 +70,206 @@
 
     <div id="loading" class="loading visible">
       <div class="spinner"></div>
-      <p>Loading analytics…</p>
+      <p>Loading dashboard data…</p>
     </div>
 
-    <section id="analytics-content" class="hidden">
-      <!-- Split Transactions -->
-      <div class="split-grid">
-        <div class="card">
-          <div class="card-header">
-            <h2><i data-lucide="coffee" class="mr-8"></i> Café Menu Sales</h2>
-          </div>
-          <div id="cafe-transactions" class="list-col"></div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h2><i data-lucide="pill" class="mr-8"></i> Supplements Sales</h2>
-          </div>
-          <div id="supp-transactions" class="list-col"></div>
-        </div>
-      </div>
+    <div id="analytics-content" class="hidden">
+      <nav class="tabs-navigation">
+        <button class="tab-btn active" data-tab="overview">
+          <i data-lucide="layout-dashboard"></i>
+          Overview
+        </button>
+        <button class="tab-btn" data-tab="cafe-menu">
+          <i data-lucide="coffee"></i>
+          Café Menu
+        </button>
+        <button class="tab-btn" data-tab="supplements">
+          <i data-lucide="pill"></i>
+          Supplements
+        </button>
+        <button class="tab-btn" data-tab="transactions">
+          <i data-lucide="receipt"></i>
+          All Transactions
+        </button>
+        <button class="tab-btn" data-tab="expenses">
+          <i data-lucide="wallet"></i>
+          Expenses
+        </button>
+      </nav>
 
-      <!-- Supplements Insights -->
-      <div class="split-grid">
-        <div class="card">
-          <div class="card-header">
-            <h2><i data-lucide="trophy" class="mr-8"></i> Top Supplements (Revenue)</h2>
+      <div id="tab-overview" class="tab-content active">
+        <div class="split-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="coffee"></i> Recent Café Sales</h2>
+            </div>
+            <div id="cafe-transactions" class="list-col"></div>
           </div>
-          <ul id="top-supp-by-revenue" class="simple-list"></ul>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h2><i data-lucide="package" class="mr-8"></i> Top Supplements (Units)</h2>
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="pill"></i> Recent Supplement Sales</h2>
+            </div>
+            <div id="supp-transactions" class="list-col"></div>
           </div>
-          <ul id="top-supp-by-units" class="simple-list"></ul>
         </div>
-      </div>
 
-      <!-- Inventory + Expenses -->
-      <div class="split-grid">
-        <div class="card">
+        <div class="card" style="margin-top: 20px;">
           <div class="card-header">
-            <h2><i data-lucide="boxes" class="mr-8"></i> Low Stock Supplements</h2>
+            <h2><i data-lucide="alert-circle"></i> Low Stock Alerts</h2>
           </div>
           <ul id="low-stock-list" class="simple-list"></ul>
         </div>
+      </div>
+
+      <div id="tab-cafe-menu" class="tab-content">
+        <div class="daily-summary">
+          <div class="daily-card">
+            <h4>Total Café Sales</h4>
+            <p class="value" id="cafe-total-sales">৳0.00</p>
+          </div>
+          <div class="daily-card">
+            <h4>Café Orders</h4>
+            <p class="value" id="cafe-total-orders">0</p>
+          </div>
+          <div class="daily-card">
+            <h4>Average Order Value</h4>
+            <p class="value" id="cafe-avg-order">৳0.00</p>
+          </div>
+        </div>
+
+        <div class="split-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="trophy"></i> Most Sold Items</h2>
+            </div>
+            <div id="cafe-most-sold" class="card-body"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="trending-down"></i> Least Sold Items</h2>
+            </div>
+            <div id="cafe-least-sold" class="card-body"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h2><i data-lucide="list"></i> All Café Menu Sales</h2>
+          </div>
+          <div id="cafe-all-items" class="list-col"></div>
+        </div>
+      </div>
+
+      <div id="tab-supplements" class="tab-content">
+        <div class="daily-summary">
+          <div class="daily-card">
+            <h4>Total Supplement Sales</h4>
+            <p class="value" id="supp-total-sales">৳0.00</p>
+          </div>
+          <div class="daily-card">
+            <h4>Units Sold</h4>
+            <p class="value" id="supp-units-sold">0</p>
+          </div>
+          <div class="daily-card">
+            <h4>Profit Margin</h4>
+            <p class="value" id="supp-profit-margin">0%</p>
+          </div>
+        </div>
+
+        <div class="split-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="trophy"></i> Top Supplements (Revenue)</h2>
+            </div>
+            <ul id="top-supp-by-revenue" class="simple-list"></ul>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="package"></i> Top Supplements (Units)</h2>
+            </div>
+            <ul id="top-supp-by-units" class="simple-list"></ul>
+          </div>
+        </div>
+
+        <div class="split-grid">
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="trending-down"></i> Least Sold Supplements</h2>
+            </div>
+            <ul id="least-supp-by-units" class="simple-list"></ul>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2><i data-lucide="alert-triangle"></i> Low Stock Items</h2>
+            </div>
+            <ul id="supp-low-stock-list" class="simple-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-transactions" class="tab-content">
+        <div class="daily-summary">
+          <div class="daily-card">
+            <h4>Total Transactions</h4>
+            <p class="value" id="all-tx-count">0</p>
+          </div>
+          <div class="daily-card">
+            <h4>Total Revenue</h4>
+            <p class="value" id="all-tx-revenue">৳0.00</p>
+          </div>
+          <div class="daily-card">
+            <h4>Total Expenses</h4>
+            <p class="value" id="all-tx-expenses">৳0.00</p>
+          </div>
+          <div class="daily-card">
+            <h4>Net Income</h4>
+            <p class="value" id="all-tx-net">৳0.00</p>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
-            <h2><i data-lucide="wallet" class="mr-8"></i> Expenses (Period)</h2>
+            <h2><i data-lucide="search"></i> Search & Filter Transactions</h2>
+          </div>
+          <div class="card-body">
+            <input type="text" id="tx-search" class="search-box" placeholder="Search by customer name, order ID..." />
+            <div class="table-container">
+              <table class="transactions-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Order ID</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="all-transactions-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-expenses" class="tab-content">
+        <div class="daily-summary">
+          <div class="daily-card">
+            <h4>Total Expenses</h4>
+            <p class="value" id="exp-total">৳0.00</p>
+          </div>
+          <div class="daily-card">
+            <h4>Number of Expenses</h4>
+            <p class="value" id="exp-count">0</p>
+          </div>
+          <div class="daily-card">
+            <h4>Average Expense</h4>
+            <p class="value" id="exp-avg">৳0.00</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2><i data-lucide="plus-circle"></i> Add New Expense</h2>
           </div>
           <form id="expense-form" class="expense-form">
             <input id="exp-description" placeholder="Description" required />
@@ -127,12 +277,18 @@
             <input id="exp-category" placeholder="Category (optional)" />
             <button class="btn-primary" type="submit">Add Expense</button>
           </form>
-          <ul id="expense-list" class="simple-list mt-12"></ul>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+          <div class="card-header">
+            <h2><i data-lucide="list"></i> Expense History</h2>
+          </div>
+          <ul id="expense-list" class="simple-list"></ul>
         </div>
       </div>
 
-      <p id="no-data-msg" class="empty-message hidden">No transactions found for the selected period.</p>
-    </section>
+      <p id="no-data-msg" class="empty-message hidden">No data found for the selected period.</p>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

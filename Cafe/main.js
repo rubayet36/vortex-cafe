@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial data loads
   fetchAndRenderOrders();
-  fetchAndRenderTransactionsSplit();
+  fetchAndRenderTransactionsSplit(); // ✅ ensures Transactions render on load
   loadMenuItems();
 
   // Icons + auto refresh

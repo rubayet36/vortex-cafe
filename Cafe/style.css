@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --dark-bg: #1a1a2e;
+    --card-bg: #2a2a3e;
+    --red-vortex: #e94560;
+    --text-color: #f0f0f0;
+    --input-bg: #3c3c5a;
+    --input-border: #4d4d6b;
+    --placeholder-color: #a0a0b0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+.container {
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.header {
+    margin-bottom: 40px;
+}
+
+.logo {
+    background-color: var(--red-vortex);
+    color: var(--text-color);
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3em;
+    font-weight: 700;
+    margin: 0 auto 10px auto;
+}
+
+h1 {
+    font-size: 2.2em;
+    margin: 0;
+    color: var(--text-color);
+    letter-spacing: 2px;
+}
+
+.header p {
+    font-size: 0.9em;
+    color: var(--placeholder-color);
+    margin-top: 5px;
+}
+
+.login-card {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.lock-icon {
+    width: 50px;
+    height: 50px;
+    background-color: var(--red-vortex);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px auto;
+}
+
+.lock-icon img {
+    width: 28px;
+    height: 28px;
+    filter: invert(100%); /* Make SVG icon white if it's black */
+}
+
+h2 {
+    font-size: 1.8em;
+    margin-bottom: 25px;
+    color: var(--text-color);
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 0.85em;
+    margin-bottom: 8px;
+    color: var(--placeholder-color);
+}
+
+.input-group input[type="email"],
+.input-group input[type="password"] {
+    width: calc(100% - 20px);
+    padding: 12px 10px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input[type="email"]::placeholder,
+.input-group input[type="password"]::placeholder {
+    color: var(--placeholder-color);
+}
+
+.input-group input[type="email"]:focus,
+.input-group input[type="password"]:focus {
+    border-color: var(--red-vortex);
+    outline: none;
+}
+
+.sign-in-button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--red-vortex);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 15px;
+}
+
+.sign-in-button:hover {
+    background-color: #cf3a52; /* Slightly darker red */
+    transform: translateY(-2px);
+}
+
+.sign-in-button:active {
+    transform: translateY(0);
+}
+
+.demo-credentials {
+    font-size: 0.75em;
+    color: var(--placeholder-color);
+    margin-top: 30px;
+    line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 25px;
+    }
+
+    h1 {
+        font-size: 1.8em;
+    }
+
+    h2 {
+        font-size: 1.5em;
+    }
+
+    .logo {
+        width: 50px;
+        height: 50px;
+        font-size: 2.5em;
+    }
+}
+
+
+
+
+
+
+

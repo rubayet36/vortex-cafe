@@ -18,46 +18,16 @@
         />
         <h1>Staff Dashboard</h1>
       </div>
-      <div style="display: flex; align-items: center; gap: 1rem;">
-        <button id="theme-toggle-btn" class="theme-btn">
-          <i data-lucide="moon" id="theme-icon"></i>
-          <span id="theme-text">Dark Mode</span>
-        </button>
-        <a href="index.html" class="logout-btn">Logout</a>
-      </div>
+      <a href="index.html" class="logout-btn">Logout</a>
     </div>
   </header>
 
   <main class="container">
     <div class="main-tabs">
-      <button class="main-tab-btn active" data-tab="dashboard">
-        <i data-lucide="layout-dashboard"></i> Dashboard
-      </button>
-      <button class="main-tab-btn" data-tab="menu">
-        <i data-lucide="utensils"></i> Menu Management
-      </button>
-      <button class="main-tab-btn" data-tab="supplements">
-        <i data-lucide="pill"></i> Supplements Portal
-      </button>
-      <button class="main-tab-btn" data-tab="orders">
-        <i data-lucide="shopping-cart"></i> Orders Management
-      </button>
-      <button class="main-tab-btn" data-tab="supplement-requests">
-        <i data-lucide="clipboard-list"></i> Supplement Requests
-      </button>
-      <button class="main-tab-btn" data-tab="transactions">
-        <i data-lucide="bar-chart-3"></i> Transactions Analytics
-      </button>
-    </div>
-
-    <!-- DASHBOARD OVERVIEW -->
-    <div id="dashboard-section" class="tab-content active">
-      <h2 class="title">Dashboard Overview</h2>
-      <div id="dashboard-stats" class="dashboard-overview"></div>
-      <div style="margin-top: 2rem;">
-        <h3 class="title" style="font-size: 1.5rem; margin-bottom: 1rem;">Recent Activity</h3>
-        <div id="recent-orders-preview"></div>
-      </div>
+      <button class="main-tab-btn" data-tab="menu">Menu Management</button>
+      <button class="main-tab-btn" data-tab="supplements">Supplements Portal</button>
+      <button class="main-tab-btn active" data-tab="orders">Orders Management</button>
+      <button class="main-tab-btn" data-tab="transactions">Transactions Analytics</button>
     </div>
 
     <!-- MENU MANAGEMENT -->
@@ -194,7 +164,7 @@
     </div>
 
     <!-- ORDERS MANAGEMENT -->
-    <div id="orders-section" class="tab-content">
+    <div id="orders-section" class="tab-content active">
       <h2 class="title">Current Orders</h2>
       <div id="loading-orders" class="loading-spinner"><div class="spinner"></div></div>
 
@@ -225,91 +195,14 @@
       </div> <!-- ✅ end .kanban-board -->
     </div> <!-- ✅ end #orders-section -->
 
-    <!-- SUPPLEMENT REQUESTS -->
-    <div id="supplement-requests-section" class="tab-content">
-      <div class="toolbar">
-        <h2 class="title">Supplement Requests</h2>
-      </div>
-
-      <div class="request-form">
-        <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">Submit New Request</h3>
-        <form id="supplement-request-form">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="req-supplement-name">Supplement Name/Type *</label>
-              <input type="text" id="req-supplement-name" required placeholder="e.g., Whey Protein Isolate" />
-            </div>
-            <div class="form-group">
-              <label for="req-quantity">Quantity *</label>
-              <input type="number" id="req-quantity" min="1" required placeholder="e.g., 2" />
-            </div>
-          </div>
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="req-customer-name">Customer Name *</label>
-              <input type="text" id="req-customer-name" required placeholder="Enter customer name" />
-            </div>
-            <div class="form-group">
-              <label for="req-customer-contact">Contact (Optional)</label>
-              <input type="text" id="req-customer-contact" placeholder="Phone or email" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="req-instructions">Special Instructions (Optional)</label>
-            <textarea id="req-instructions" rows="3" placeholder="Any specific requirements or notes..."></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <i data-lucide="send"></i> Submit Request
-          </button>
-        </form>
-      </div>
-
-      <h3 class="title" style="font-size: 1.25rem; margin-bottom: 1rem;">All Requests</h3>
-      <div id="supplement-requests-list"></div>
-      <p id="no-requests-msg" class="empty-message hidden">No supplement requests found.</p>
-    </div>
-
-    <!-- TRANSACTIONS -->
+    <!-- ✅ TRANSACTIONS (now outside Orders) -->
     <div id="transactions-section" class="tab-content">
-      <div class="toolbar">
-        <h2 class="title">Transaction History</h2>
-        <button id="export-transactions-btn" class="btn export-btn">
-          <i data-lucide="download"></i> Export Data
-        </button>
-      </div>
-
-      <div class="filters-bar">
-        <div class="filter-group">
-          <label for="search-transaction">Search</label>
-          <input type="text" id="search-transaction" class="search-input" placeholder="Search by customer name or order ID...">
-        </div>
-        <div class="filter-group">
-          <label for="filter-date-from">From</label>
-          <input type="date" id="filter-date-from">
-        </div>
-        <div class="filter-group">
-          <label for="filter-date-to">To</label>
-          <input type="date" id="filter-date-to">
-        </div>
-        <div class="filter-group">
-          <label for="filter-type">Type</label>
-          <select id="filter-type">
-            <option value="all">All</option>
-            <option value="cafe">Cafe Menu</option>
-            <option value="supplements">Supplements</option>
-          </select>
-        </div>
-        <div class="filter-group" style="justify-content: flex-end;">
-          <label>&nbsp;</label>
-          <button id="apply-filters-btn" class="btn btn-primary">Apply Filters</button>
-        </div>
-      </div>
-
+      <h2 class="title">Daily Transactions</h2>
       <div id="loading-transactions" class="loading-spinner"><div class="spinner"></div></div>
       <div id="transactions-summary" class="transactions-summary"></div>
       <div id="transactions-list" class="transactions-list"></div>
       <p id="no-transactions-msg" class="empty-message hidden">
-        No transactions found.
+        No completed transactions today.
       </p>
     </div>
   </main>
@@ -328,31 +221,16 @@
           <div class="form-group"><label for="category">Category *</label>
             <select id="category" required>
               <option>Smoothies</option>
-              <option>Juice</option>
-              <option>Coffee</option>
               <option>Protein Bowls</option>
               <option>Meals</option>
               <option>Snacks</option>
               <option>Supplements</option>
-              
             </select>
           </div>
         </div>
         <div class="form-group"><label for="description">Description *</label><textarea id="description" rows="3" required></textarea></div>
-
-        <h4 class="form-section-title">Pricing</h4>
-        <div class="form-price-grid">
-          <div class="form-group">
-            <label for="price-regular">Regular Size Price * (৳)</label>
-            <input type="number" id="price-regular" step="0.01" min="0" required />
-          </div>
-          <div class="form-group">
-            <label for="price-large">Large Size Price * (৳)</label>
-            <input type="number" id="price-large" step="0.01" min="0" required />
-          </div>
-        </div>
-
         <div class="form-grid">
+          <div class="form-group"><label for="price">Price *</label><input type="number" id="price" step="0.01" required /></div>
           <div class="form-group form-group-checkbox"><label for="is_popular">Mark as Popular Item</label><input type="checkbox" id="is_popular" class="checkbox-toggle" /></div>
         </div>
         <div class="form-grid">
@@ -386,30 +264,11 @@
     </div>
   </div>
 
-  <!-- TRANSACTION DETAIL MODAL -->
-  <div id="transaction-detail-modal" class="modal-overlay transaction-detail-modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="transaction-detail-title">Transaction Details</h3>
-        <button id="close-transaction-detail-btn" class="modal-close-button">
-          <i data-lucide="x"></i>
-        </button>
-      </div>
-      <div id="transaction-detail-body" class="modal-body"></div>
-      <div class="modal-footer">
-        <button id="print-receipt-btn" class="btn btn-primary">
-          <i data-lucide="printer"></i> Print Receipt
-        </button>
-        <button id="close-detail-btn" class="btn btn-secondary">Close</button>
-      </div>
-    </div>
-  </div>
-
   <audio id="notification-sound"
          src="https://actions.google.com/sounds/v1/alarms/notification_high_intensity.ogg"
          preload="auto"></audio>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="./stuff.js"></script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>
