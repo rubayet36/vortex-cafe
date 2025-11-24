@@ -253,6 +253,20 @@ body {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
+/* makes the Cash/bKash/Card text look clean */
+#cafe-avg-order,
+#supp-profit-margin {
+  font-size: 1.05rem;        /* bigger text */
+  font-weight: 700;          /* bold */
+  color: #0f172a;            /* darker navy for contrast */
+  line-height: 1.5;
+  white-space: pre-line;     /* keep your optional line breaks working */
+}
+
+/* (optional) a little spacing inside those cards if needed */
+.daily-card .value {
+  padding-top: 4px;
+}
 
 .summary-grid {
   display: grid;

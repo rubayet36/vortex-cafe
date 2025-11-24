@@ -23,6 +23,7 @@
   </header>
 
   <main class="container">
+    <!-- FILTERS -->
     <section class="filters-card">
       <div class="filters-left">
         <button class="filter-btn active" data-range="today">Today</button>
@@ -37,6 +38,7 @@
       </div>
     </section>
 
+    <!-- TOP SUMMARY -->
     <section class="summary-grid">
       <div class="summary-card">
         <div class="summary-icon bg-cyan"><i data-lucide="banknote"></i></div>
@@ -68,12 +70,15 @@
       </div>
     </section>
 
+    <!-- LOADING STATE -->
     <div id="loading" class="loading visible">
       <div class="spinner"></div>
       <p>Loading dashboard data…</p>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div id="analytics-content" class="hidden">
+      <!-- TABS -->
       <nav class="tabs-navigation">
         <button class="tab-btn active" data-tab="overview">
           <i data-lucide="layout-dashboard"></i>
@@ -97,6 +102,7 @@
         </button>
       </nav>
 
+      <!-- OVERVIEW TAB -->
       <div id="tab-overview" class="tab-content active">
         <div class="split-grid">
           <div class="card">
@@ -121,6 +127,7 @@
         </div>
       </div>
 
+      <!-- CAFE TAB -->
       <div id="tab-cafe-menu" class="tab-content">
         <div class="daily-summary">
           <div class="daily-card">
@@ -132,7 +139,8 @@
             <p class="value" id="cafe-total-orders">0</p>
           </div>
           <div class="daily-card">
-            <h4>Average Order Value</h4>
+            <h4>Payment by Method</h4>
+            <!-- JS fills this with Cash / bKash / Card totals -->
             <p class="value" id="cafe-avg-order">৳0.00</p>
           </div>
         </div>
@@ -160,6 +168,7 @@
         </div>
       </div>
 
+      <!-- SUPPLEMENTS TAB -->
       <div id="tab-supplements" class="tab-content">
         <div class="daily-summary">
           <div class="daily-card">
@@ -172,6 +181,7 @@
           </div>
           <div class="daily-card">
             <h4>Profit Margin</h4>
+            <!-- JS now shows Cash / bKash / Card revenue here -->
             <p class="value" id="supp-profit-margin">0%</p>
           </div>
         </div>
@@ -207,6 +217,7 @@
         </div>
       </div>
 
+      <!-- ALL TRANSACTIONS TAB -->
       <div id="tab-transactions" class="tab-content">
         <div class="daily-summary">
           <div class="daily-card">
@@ -232,14 +243,21 @@
             <h2><i data-lucide="search"></i> Search & Filter Transactions</h2>
           </div>
           <div class="card-body">
-            <input type="text" id="tx-search" class="search-box" placeholder="Search by customer name, order ID..." />
+            <!-- search now focused on payment type + order ID -->
+            <input
+              type="text"
+              id="tx-search"
+              class="search-box"
+              placeholder="Search by payment type, order ID..."
+            />
             <div class="table-container">
               <table class="transactions-table">
                 <thead>
                   <tr>
                     <th>Date & Time</th>
                     <th>Type</th>
-                    <th>Customer</th>
+                    <!-- header changed from Customer -> Payment Type -->
+                    <th>Payment Type</th>
                     <th>Order ID</th>
                     <th>Amount</th>
                   </tr>
@@ -251,6 +269,7 @@
         </div>
       </div>
 
+      <!-- EXPENSES TAB -->
       <div id="tab-expenses" class="tab-content">
         <div class="daily-summary">
           <div class="daily-card">
@@ -287,7 +306,9 @@
         </div>
       </div>
 
-      <p id="no-data-msg" class="empty-message hidden">No data found for the selected period.</p>
+      <p id="no-data-msg" class="empty-message hidden">
+        No data found for the selected period.
+      </p>
     </div>
   </main>
 

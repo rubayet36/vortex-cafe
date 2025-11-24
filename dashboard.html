@@ -313,6 +313,68 @@
       </p>
     </div>
   </main>
+    <!-- PAYMENT MODAL -->
+  <div id="payment-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Mark Payment</h3>
+        <button id="payment-close-btn" class="modal-close-button">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <form id="payment-form" class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Order ID</div>
+            <div class="detail-value" id="payment-order-id">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Customer</div>
+            <div class="detail-value" id="payment-order-customer">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Total Amount</div>
+            <div class="detail-value" id="payment-order-total">৳0.00</div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="payment-method">Payment Method *</label>
+            <select id="payment-method" required>
+              <option value="">Select method</option>
+              <option value="bkash">bKash</option>
+              <option value="card">Card</option>
+              <option value="cash">Cash</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="payment-reference">Payment Reference (optional)</label>
+            <input
+              type="text"
+              id="payment-reference"
+              placeholder="bKash trxID, card last 4, etc."
+            />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            id="payment-cancel-btn"
+            class="btn btn-secondary"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Confirm Payment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- MENU ITEM MODAL -->
   <div id="item-modal" class="modal-overlay hidden">
@@ -330,9 +392,6 @@
               <option>Smoothies</option>
               <option>Juice</option>
               <option>Coffee</option>
-              <option>Protein Bowls</option>
-              <option>Meals</option>
-              <option>Snacks</option>
               <option>Supplements</option>
               
             </select>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vortex – Current New Orders</title>
+
+  <!-- Reuse main dashboard styles -->
+  <link rel="stylesheet" href="dashboard.css" />
+
+  <!-- Extra page-specific styles -->
+  <style>
+    .current-header-top {
+      background-color: var(--header-bg);
+      color: #fff;
+      padding: 0.5rem 2rem;
+      box-shadow: var(--shadow);
+    }
+    .current-header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+    .current-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .current-logo {
+      height: 52px;
+      width: auto;
+      object-fit: contain;
+    }
+    .current-header-text-main {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .current-header-text-sub {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .current-back-btn {
+      background-color: var(--card-bg);
+      color: var(--text-primary);
+      border-radius: 999px;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border-color);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .current-back-btn:hover {
+      background-color: #e5e7eb;
+    }
+
+    .current-page-wrap {
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    .current-card {
+      background-color: var(--card-bg);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow);
+      padding: 1.5rem 1.75rem;
+    }
+    .current-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      padding-bottom: 0.9rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .current-card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    .current-card-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.35rem;
+    }
+    .current-meta-pill {
+      font-size: 0.8rem;
+      background-color: #fee2e2;
+      color: #b91c1c;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    #orders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 120px;
+    }
+
+    /* tighten order card a bit on this page */
+    #orders-list .order-card {
+      border-left-width: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .current-header-top {
+        padding: 0.5rem 1rem;
+      }
+      .current-header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .current-page-wrap {
+        margin-top: 1.5rem;
+        padding: 0 1rem;
+      }
+      .current-card {
+        padding: 1.25rem 1.25rem;
+      }
+      .current-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+
+<body>
+  <!-- Top header bar -->
+  <div class="current-header-top">
+    <div class="current-header-inner">
+      <div class="current-header-left">
+        <img
+          src="https://i.postimg.cc/ZRQYcx0d/Fitness-Club-1-removebg-preview.png"
+          alt="Vortex Fitness Club"
+          class="current-logo"
+        />
+        <div>
+          <div class="current-header-text-main">Vortex Staff Portal</div>
+          <div class="current-header-text-sub">Current New Orders Only</div>
+        </div>
+      </div>
+
+      <a href="dashboard.html" class="current-back-btn">
+        <i data-lucide="layout-dashboard"></i>
+        Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main class="current-page-wrap">
+    <section class="current-card">
+      <div class="current-card-header">
+        <div>
+          <h2 class="current-card-title">Current New Orders</h2>
+          <p class="current-card-subtitle">
+            Showing only orders with status
+            <strong>“Not Taken”</strong>. Click
+            <strong>Complete Order</strong> when the order is fully done.
+          </p>
+        </div>
+        <span class="current-meta-pill">Live view</span>
+      </div>
+
+      <!-- Loading spinner -->
+      <div id="loading-orders" class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Orders list -->
+      <div id="orders-list">
+        <!-- JS fills this -->
+        <p class="empty-message">No new orders.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Notification sound (optional) -->
+  <audio
+    id="notification-sound"
+    src="https://actions.google.com/sounds/v1/alarms/notification_high_intensity.ogg"
+    preload="auto"
+  ></audio>
+
+  <!-- Supabase + page logic -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="current-orders.js"></script>
+</body>
+</html>

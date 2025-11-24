@@ -1,6 +1,5 @@
-const SUPABASE_URL = 'https://ybrdqxetprlhscfuebyy.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicmRxeGV0cHJsaHNjZnVlYnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MTg2NjksImV4cCI6MjA3NzQ5NDY2OX0.N7pxPNmi1ZowVd9Nik9KABhqTtp3NP-XlEcEiNlJ-8M';
+const SUPABASE_URL = 'https://ovxxnsrqzdlyzdmubwaw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92eHhuc3JxemRseXpkbXVid2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzY4MTgsImV4cCI6MjA3OTU1MjgxOH0.uwU9aQGbUO7OEv4HI8Rtq7awANWNubt3yJTSUMZRAJU';
 
 const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -42,7 +41,43 @@ let cafeOrderItems = [];
 let menuItemsById = {};
 
 function formatBDT(n) {
-  return '৳' + Number(n || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (
+    '৳' +
+    Number(n || 0).toLocaleString('en-BD', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+}
+
+// normalize payment method names
+function prettyPaymentMethod(m) {
+  if (!m) return '—';
+  const val = String(m).toLowerCase();
+  if (val === 'bkash') return 'bKash';
+  if (val === 'card') return 'Card';
+  if (val === 'cash') return 'Cash';
+  return 'Other';
+}
+
+// sum revenue per payment method for a list of orders
+function getPaymentBreakdown(orders) {
+  const totals = { cash: 0, bkash: 0, card: 0, other: 0 };
+
+  orders.forEach((o) => {
+    const payments = o.payments || [];
+    if (!payments.length) return;
+    const last = payments[payments.length - 1];
+    const method = (last.method || '').toLowerCase();
+    const amt = Number(o.total_amount || 0);
+
+    if (method === 'cash') totals.cash += amt;
+    else if (method === 'bkash') totals.bkash += amt;
+    else if (method === 'card') totals.card += amt;
+    else totals.other += amt;
+  });
+
+  return totals;
 }
 
 function startOfDay(d) {
@@ -80,17 +115,20 @@ function initDatePicker() {
     dateFormat: 'Y-m-d',
     onClose: (selectedDates) => {
       if (selectedDates.length === 2) {
-        range = { from: startOfDay(selectedDates[0]), to: endOfDay(selectedDates[1]) };
+        range = {
+          from: startOfDay(selectedDates[0]),
+          to: endOfDay(selectedDates[1]),
+        };
         refresh();
       }
-    }
+    },
   });
 }
 
 async function fetchCafeOrders() {
   const { data, error } = await supabase
     .from('orders')
-    .select('*')
+    .select('*, payments(*)') // include payments
     .eq('status', 'Delivery Complete')
     .gte('created_at', iso(range.from))
     .lte('created_at', iso(range.to))
@@ -124,14 +162,15 @@ async function fetchMenuItems() {
     return {};
   }
   const map = {};
-  (data || []).forEach(item => map[item.id] = item);
+  (data || []).forEach((item) => (map[item.id] = item));
   return map;
 }
 
 async function fetchSuppOrders() {
   const { data, error } = await supabase
     .from('supplement_orders')
-    .select('*')
+    // alias FK just like in the staff dashboard: payments for supplements
+    .select('*, payments:payments_supplement_order_id_fkey(*)')
     .eq('status', 'Completed')
     .gte('created_at', iso(range.from))
     .lte('created_at', iso(range.to))
@@ -165,7 +204,7 @@ async function fetchSuppProductsMap() {
     return {};
   }
   const map = {};
-  (data || []).forEach(p => map[p.id] = p);
+  (data || []).forEach((p) => (map[p.id] = p));
   return map;
 }
 
@@ -204,13 +243,15 @@ function renderTransactionsList(target, rows, kind) {
     return;
   }
   const display = rows.slice(0, 10);
-  display.forEach(tx => {
+  display.forEach((tx) => {
     const el = document.createElement('div');
     el.className = 'tx-item';
     el.innerHTML = `
       <div class="tx-left">
         <span class="tx-title">${tx.customer_name || 'Walk-in'}</span>
-        <span class="tx-sub">${new Date(tx.created_at).toLocaleString()} • ${kind === 'cafe' ? 'Cafe #' : 'Supp #'}${String(tx.id).slice(0, 6).toUpperCase()}</span>
+        <span class="tx-sub">${new Date(tx.created_at).toLocaleString()} • ${
+          kind === 'cafe' ? 'Cafe #' : 'Supp #'
+        }${String(tx.id).slice(0, 6).toUpperCase()}</span>
       </div>
       <div class="tx-amount">${formatBDT(tx.total_amount)}</div>
     `;
@@ -219,35 +260,52 @@ function renderTransactionsList(target, rows, kind) {
 }
 
 function renderCafeStats() {
-  const totalSales = cafeOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+  const totalSales = cafeOrders.reduce(
+    (s, o) => s + Number(o.total_amount || 0),
+    0
+  );
   const orderCount = cafeOrders.length;
-  const avgOrder = orderCount > 0 ? totalSales / orderCount : 0;
 
-  document.getElementById('cafe-total-sales').textContent = formatBDT(totalSales);
-  document.getElementById('cafe-total-orders').textContent = String(orderCount);
-  document.getElementById('cafe-avg-order').textContent = formatBDT(avgOrder);
+  document.getElementById('cafe-total-sales').textContent =
+    formatBDT(totalSales);
+  document.getElementById('cafe-total-orders').textContent =
+    String(orderCount);
+
+  // Show payment breakdown instead of average order value
+  const cafePay = getPaymentBreakdown(cafeOrders);
+  let cafeBreakdown =
+    `Cash: ${formatBDT(cafePay.cash)} • ` +
+    `bKash: ${formatBDT(cafePay.bkash)} • ` +
+    `Card: ${formatBDT(cafePay.card)}`;
+  if (cafePay.other > 0) {
+    cafeBreakdown += ` • Other: ${formatBDT(cafePay.other)}`;
+  }
+  document.getElementById('cafe-avg-order').textContent = cafeBreakdown;
 
   const itemStats = {};
-  cafeOrderItems.forEach(item => {
+  cafeOrderItems.forEach((item) => {
     const menuId = item.menu_item_id;
     if (!itemStats[menuId]) {
       itemStats[menuId] = { quantity: 0, revenue: 0 };
     }
     itemStats[menuId].quantity += Number(item.quantity || 0);
-    itemStats[menuId].revenue += Number(item.price_at_order || 0) * Number(item.quantity || 0);
+    itemStats[menuId].revenue +=
+      Number(item.price_at_order || 0) * Number(item.quantity || 0);
   });
 
-  const sortedByRevenue = Object.entries(itemStats)
-    .sort((a, b) => b[1].revenue - a[1].revenue);
+  const sortedByRevenue = Object.entries(itemStats).sort(
+    (a, b) => b[1].revenue - a[1].revenue
+  );
 
   const mostSold = sortedByRevenue.slice(0, 5);
   const leastSold = sortedByRevenue.slice(-5).reverse();
 
   const mostSoldEl = document.getElementById('cafe-most-sold');
   if (mostSold.length) {
-    mostSoldEl.innerHTML = mostSold.map(([id, stats]) => {
-      const menuItem = menuItemsById[id] || {};
-      return `
+    mostSoldEl.innerHTML = mostSold
+      .map(([id, stats]) => {
+        const menuItem = menuItemsById[id] || {};
+        return `
         <div class="product-card">
           <div class="product-info">
             <h3>${menuItem.name || 'Unknown Item'}</h3>
@@ -259,16 +317,19 @@ function renderCafeStats() {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
   } else {
-    mostSoldEl.innerHTML = '<p class="empty-message">No sales data available.</p>';
+    mostSoldEl.innerHTML =
+      '<p class="empty-message">No sales data available.</p>';
   }
 
   const leastSoldEl = document.getElementById('cafe-least-sold');
   if (leastSold.length) {
-    leastSoldEl.innerHTML = leastSold.map(([id, stats]) => {
-      const menuItem = menuItemsById[id] || {};
-      return `
+    leastSoldEl.innerHTML = leastSold
+      .map(([id, stats]) => {
+        const menuItem = menuItemsById[id] || {};
+        return `
         <div class="product-card">
           <div class="product-info">
             <h3>${menuItem.name || 'Unknown Item'}</h3>
@@ -280,56 +341,86 @@ function renderCafeStats() {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
   } else {
-    leastSoldEl.innerHTML = '<p class="empty-message">No sales data available.</p>';
+    leastSoldEl.innerHTML =
+      '<p class="empty-message">No sales data available.</p>';
   }
 
   const allItemsEl = document.getElementById('cafe-all-items');
   if (sortedByRevenue.length) {
-    allItemsEl.innerHTML = sortedByRevenue.map(([id, stats]) => {
-      const menuItem = menuItemsById[id] || {};
-      return `
+    allItemsEl.innerHTML = sortedByRevenue
+      .map(([id, stats]) => {
+        const menuItem = menuItemsById[id] || {};
+        return `
         <div class="tx-item">
           <div class="tx-left">
             <span class="tx-title">${menuItem.name || 'Unknown Item'}</span>
-            <span class="tx-sub">${menuItem.category || 'Uncategorized'} • ${stats.quantity} units sold</span>
+            <span class="tx-sub">${menuItem.category || 'Uncategorized'} • ${
+          stats.quantity
+        } units sold</span>
           </div>
           <div class="tx-amount">${formatBDT(stats.revenue)}</div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
   } else {
-    allItemsEl.innerHTML = '<p class="empty-message">No menu items sold in this period.</p>';
+    allItemsEl.innerHTML =
+      '<p class="empty-message">No menu items sold in this period.</p>';
   }
 }
 
 function renderSupplementStats() {
-  const totalSales = suppOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const totalUnits = suppItems.reduce((s, i) => s + Number(i.quantity || 0), 0);
+  const totalSales = suppOrders.reduce(
+    (s, o) => s + Number(o.total_amount || 0),
+    0
+  );
+  const totalUnits = suppItems.reduce(
+    (s, i) => s + Number(i.quantity || 0),
+    0
+  );
 
   const buyMap = supplementProductsById;
-  const totals = suppItems.reduce((acc, it) => {
-    const id = it.supplement_product_id;
-    const qty = Number(it.quantity || 0);
-    const sale = Number(it.price_at_order || 0) * qty;
-    const cost = Number((buyMap[id]?.buying_price) || 0) * qty;
-    acc.sale += sale;
-    acc.cost += cost;
-    return acc;
-  }, { sale: 0, cost: 0 });
+  const totals = suppItems.reduce(
+    (acc, it) => {
+      const id = it.supplement_product_id;
+      const qty = Number(it.quantity || 0);
+      const sale = Number(it.price_at_order || 0) * qty;
+      const cost = Number(buyMap[id]?.buying_price || 0) * qty;
+      acc.sale += sale;
+      acc.cost += cost;
+      return acc;
+    },
+    { sale: 0, cost: 0 }
+  );
 
-  const profitMargin = totals.sale > 0 ? ((totals.sale - totals.cost) / totals.sale * 100) : 0;
+  // we still compute margin (in case you want it later),
+  // but we don't display it – we show payment breakdown instead
+  const profitMargin =
+    totals.sale > 0 ? ((totals.sale - totals.cost) / totals.sale) * 100 : 0;
 
-  document.getElementById('supp-total-sales').textContent = formatBDT(totalSales);
-  document.getElementById('supp-units-sold').textContent = String(totalUnits);
-  document.getElementById('supp-profit-margin').textContent = profitMargin.toFixed(1) + '%';
+  document.getElementById('supp-total-sales').textContent =
+    formatBDT(totalSales);
+  document.getElementById('supp-units-sold').textContent =
+    String(totalUnits);
+
+  const suppPay = getPaymentBreakdown(suppOrders);
+  let suppBreakdown =
+    `Cash: ${formatBDT(suppPay.cash)} • ` +
+    `bKash: ${formatBDT(suppPay.bkash)} • ` +
+    `Card: ${formatBDT(suppPay.card)}`;
+  if (suppPay.other > 0) {
+    suppBreakdown += ` • Other: ${formatBDT(suppPay.other)}`;
+  }
+  document.getElementById('supp-profit-margin').textContent = suppBreakdown;
 }
 
 function renderTopSupplements(items, prodMap) {
   const revenueById = {};
   const unitsById = {};
-  (items || []).forEach(it => {
+  (items || []).forEach((it) => {
     const id = it.supplement_product_id;
     const qty = Number(it.quantity || 0);
     const sale = Number(it.price_at_order || 0) * qty;
@@ -338,40 +429,64 @@ function renderTopSupplements(items, prodMap) {
   });
 
   const topRev = Object.entries(revenueById)
-    .sort((a, b) => b[1] - a[1]).slice(0, 8);
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
   const topQty = Object.entries(unitsById)
-    .sort((a, b) => b[1] - a[1]).slice(0, 8);
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
   const leastQty = Object.entries(unitsById)
-    .sort((a, b) => a[1] - b[1]).slice(0, 8);
+    .sort((a, b) => a[1] - b[1])
+    .slice(0, 8);
 
   topSuppByRevenueEl.innerHTML = topRev.length
-    ? topRev.map(([id, amt]) => {
-      const p = prodMap[id] || {};
-      return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${p.brand || '—'})</span></span><span class="badge badge-success">${formatBDT(amt)}</span></li>`;
-    }).join('')
+    ? topRev
+        .map(([id, amt]) => {
+          const p = prodMap[id] || {};
+          return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${
+            p.brand || '—'
+          })</span></span><span class="badge badge-success">${formatBDT(
+            amt
+          )}</span></li>`;
+        })
+        .join('')
     : `<li class="tx-sub">No supplement revenue in this period.</li>`;
 
   topSuppByUnitsEl.innerHTML = topQty.length
-    ? topQty.map(([id, qty]) => {
-      const p = prodMap[id] || {};
-      return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${p.brand || '—'})</span></span><span class="badge badge-info">${qty} pcs</span></li>`;
-    }).join('')
+    ? topQty
+        .map(([id, qty]) => {
+          const p = prodMap[id] || {};
+          return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${
+            p.brand || '—'
+          })</span></span><span class="badge badge-info">${qty} pcs</span></li>`;
+        })
+        .join('')
     : `<li class="tx-sub">No supplement units in this period.</li>`;
 
   const leastSuppEl = document.getElementById('least-supp-by-units');
   if (leastSuppEl) {
     leastSuppEl.innerHTML = leastQty.length
-      ? leastQty.map(([id, qty]) => {
-        const p = prodMap[id] || {};
-        return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${p.brand || '—'})</span></span><span class="badge badge-warning">${qty} pcs</span></li>`;
-      }).join('')
+      ? leastQty
+          .map(([id, qty]) => {
+            const p = prodMap[id] || {};
+            return `<li><span>${p.name || 'Unknown'} <span class="tx-sub">(${
+              p.brand || '—'
+            })</span></span><span class="badge badge-warning">${qty} pcs</span></li>`;
+          })
+          .join('')
       : `<li class="tx-sub">No supplement data available.</li>`;
   }
 }
 
 function renderLowStock(list) {
   lowStockListEl.innerHTML = list.length
-    ? list.map(p => `<li><span>${p.name} <span class="tx-sub">(${p.brand || '—'})</span></span><span class="badge badge-danger">${p.stock} left</span></li>`).join('')
+    ? list
+        .map(
+          (p) =>
+            `<li><span>${p.name} <span class="tx-sub">(${
+              p.brand || '—'
+            })</span></span><span class="badge badge-danger">${p.stock} left</span></li>`
+        )
+        .join('')
     : `<li class="tx-sub">All good. No low-stock items.</li>`;
   lowStockCountEl.textContent = list.length;
 
@@ -383,12 +498,18 @@ function renderLowStock(list) {
 
 function renderExpenses(list) {
   expenseListEl.innerHTML = list.length
-    ? list.map(e => `
+    ? list
+        .map(
+          (e) => `
       <li>
-        <span>${e.description} <span class="tx-sub">(${e.category || '—'}) • ${new Date(e.created_at).toLocaleDateString()}</span></span>
+        <span>${e.description} <span class="tx-sub">(${
+            e.category || '—'
+          }) • ${new Date(e.created_at).toLocaleDateString()}</span></span>
         <span class="badge badge-danger">-${formatBDT(e.amount)}</span>
       </li>
-    `).join('')
+    `
+        )
+        .join('')
     : `<li class="tx-sub">No expenses logged for this period.</li>`;
 
   const expTotal = list.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -407,82 +528,122 @@ function renderExpenses(list) {
 function renderAllTransactions() {
   const allTx = [];
 
-  cafeOrders.forEach(order => {
+  cafeOrders.forEach((order) => {
+    const payments = order.payments || [];
+    const last = payments[payments.length - 1] || null;
+    const methodLabel = last ? prettyPaymentMethod(last.method) : '—';
+
     allTx.push({
       date: new Date(order.created_at),
       type: 'Café',
-      customer: order.customer_name || 'Walk-in',
+      customer: methodLabel, // show payment type
       orderId: String(order.id).slice(0, 8).toUpperCase(),
-      amount: Number(order.total_amount || 0)
+      amount: Number(order.total_amount || 0),
     });
   });
 
-  suppOrders.forEach(order => {
+  suppOrders.forEach((order) => {
+    const payments = order.payments || [];
+    const last = payments[payments.length - 1] || null;
+    const methodLabel = last ? prettyPaymentMethod(last.method) : '—';
+
     allTx.push({
       date: new Date(order.created_at),
       type: 'Supplement',
-      customer: order.customer_name || 'Walk-in',
+      customer: methodLabel, // show payment type
       orderId: String(order.id).slice(0, 8).toUpperCase(),
-      amount: Number(order.total_amount || 0)
+      amount: Number(order.total_amount || 0),
     });
   });
 
-  expenses.forEach(exp => {
+  expenses.forEach((exp) => {
     allTx.push({
       date: new Date(exp.created_at),
       type: 'Expense',
       customer: exp.category || 'General',
       orderId: exp.description,
-      amount: -Number(exp.amount || 0)
+      amount: -Number(exp.amount || 0),
     });
   });
 
   allTx.sort((a, b) => b.date - a.date);
 
   const tbody = document.getElementById('all-transactions-body');
-  tbody.innerHTML = allTx.map(tx => `
+  tbody.innerHTML = allTx
+    .map(
+      (tx) => `
     <tr>
       <td>${tx.date.toLocaleString()}</td>
-      <td><span class="badge ${tx.type === 'Expense' ? 'badge-danger' : 'badge-info'}">${tx.type}</span></td>
+      <td><span class="badge ${
+        tx.type === 'Expense' ? 'badge-danger' : 'badge-info'
+      }">${tx.type}</span></td>
       <td>${tx.customer}</td>
       <td>${tx.orderId}</td>
-      <td class="${tx.amount < 0 ? 'tx-amount negative' : 'tx-amount'}">${formatBDT(Math.abs(tx.amount))}</td>
+      <td class="${
+        tx.amount < 0 ? 'tx-amount negative' : 'tx-amount'
+      }">${formatBDT(Math.abs(tx.amount))}</td>
     </tr>
-  `).join('');
+  `
+    )
+    .join('');
 
-  const totalRevenue = cafeOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0) +
+  const totalRevenue =
+    cafeOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0) +
     suppOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const totalExpenses = expenses.reduce(
+    (s, e) => s + Number(e.amount || 0),
+    0
+  );
   const netIncome = totalRevenue - totalExpenses;
 
-  document.getElementById('all-tx-count').textContent = String(allTx.length);
-  document.getElementById('all-tx-revenue').textContent = formatBDT(totalRevenue);
-  document.getElementById('all-tx-expenses').textContent = formatBDT(totalExpenses);
-  document.getElementById('all-tx-net').textContent = formatBDT(netIncome);
+  document.getElementById('all-tx-count').textContent = String(
+    allTx.length
+  );
+  document.getElementById('all-tx-revenue').textContent =
+    formatBDT(totalRevenue);
+  document.getElementById('all-tx-expenses').textContent =
+    formatBDT(totalExpenses);
+  document.getElementById('all-tx-net').textContent =
+    formatBDT(netIncome);
 
   const searchBox = document.getElementById('tx-search');
   searchBox.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
-    const filtered = allTx.filter(tx =>
-      tx.customer.toLowerCase().includes(query) ||
-      tx.orderId.toLowerCase().includes(query) ||
-      tx.type.toLowerCase().includes(query)
+    const filtered = allTx.filter(
+      (tx) =>
+        tx.customer.toLowerCase().includes(query) ||
+        tx.orderId.toLowerCase().includes(query) ||
+        tx.type.toLowerCase().includes(query)
     );
-    tbody.innerHTML = filtered.map(tx => `
+    tbody.innerHTML = filtered
+      .map(
+        (tx) => `
       <tr>
         <td>${tx.date.toLocaleString()}</td>
-        <td><span class="badge ${tx.type === 'Expense' ? 'badge-danger' : 'badge-info'}">${tx.type}</span></td>
+        <td><span class="badge ${
+          tx.type === 'Expense' ? 'badge-danger' : 'badge-info'
+        }">${tx.type}</span></td>
         <td>${tx.customer}</td>
         <td>${tx.orderId}</td>
-        <td class="${tx.amount < 0 ? 'tx-amount negative' : 'tx-amount'}">${formatBDT(Math.abs(tx.amount))}</td>
+        <td class="${
+          tx.amount < 0 ? 'tx-amount negative' : 'tx-amount'
+        }">${formatBDT(Math.abs(tx.amount))}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join('');
   });
 }
 
 function aggregates() {
-  const cafeRevenue = cafeOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const suppRevenue = suppOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+  const cafeRevenue = cafeOrders.reduce(
+    (s, o) => s + Number(o.total_amount || 0),
+    0
+  );
+  const suppRevenue = suppOrders.reduce(
+    (s, o) => s + Number(o.total_amount || 0),
+    0
+  );
   const totalRevenue = cafeRevenue + suppRevenue;
   const ordersCount = cafeOrders.length + suppOrders.length;
 
@@ -490,15 +651,18 @@ function aggregates() {
   totalOrdersEl.textContent = String(ordersCount);
 
   const buyMap = supplementProductsById;
-  const totals = (suppItems || []).reduce((acc, it) => {
-    const id = it.supplement_product_id;
-    const qty = Number(it.quantity || 0);
-    const sale = Number(it.price_at_order || 0) * qty;
-    const cost = Number((buyMap[id]?.buying_price) || 0) * qty;
-    acc.sale += sale;
-    acc.cost += cost;
-    return acc;
-  }, { sale: 0, cost: 0 });
+  const totals = (suppItems || []).reduce(
+    (acc, it) => {
+      const id = it.supplement_product_id;
+      const qty = Number(it.quantity || 0);
+      const sale = Number(it.price_at_order || 0) * qty;
+      const cost = Number(buyMap[id]?.buying_price || 0) * qty;
+      acc.sale += sale;
+      acc.cost += cost;
+      return acc;
+    },
+    { sale: 0, cost: 0 }
+  );
 
   const netProfit = totals.sale - totals.cost;
   netProfitEl.textContent = formatBDT(netProfit);
@@ -508,7 +672,9 @@ function toCSV(rows) {
   if (!rows.length) return '';
   const cols = Object.keys(rows[0]);
   const head = cols.join(',');
-  const body = rows.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(',')).join('\n');
+  const body = rows
+    .map((r) => cols.map((c) => JSON.stringify(r[c] ?? '')).join(','))
+    .join('\n');
   return head + '\n' + body;
 }
 
@@ -532,7 +698,7 @@ async function refresh() {
     fetchSuppOrders(),
     fetchExpenses(),
     fetchSuppProductsMap(),
-    fetchMenuItems()
+    fetchMenuItems(),
   ]);
   cafeOrders = cafe;
   suppOrders = supp;
@@ -540,8 +706,8 @@ async function refresh() {
   supplementProductsById = prodMap;
   menuItemsById = menuMap;
 
-  suppItems = await fetchSuppOrderItemsFor(suppOrders.map(o => o.id));
-  cafeOrderItems = await fetchCafeOrderItems(cafeOrders.map(o => o.id));
+  suppItems = await fetchSuppOrderItemsFor(suppOrders.map((o) => o.id));
+  cafeOrderItems = await fetchCafeOrderItems(cafeOrders.map((o) => o.id));
 
   renderTransactionsList(cafeTransactionsEl, cafeOrders, 'cafe');
   renderTransactionsList(suppTransactionsEl, suppOrders, 'supplements');
@@ -568,14 +734,14 @@ function setupTabs() {
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 
-  tabBtns.forEach(btn => {
+  tabBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
       const targetTab = btn.dataset.tab;
 
-      tabBtns.forEach(b => b.classList.remove('active'));
+      tabBtns.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
 
-      tabContents.forEach(content => {
+      tabContents.forEach((content) => {
         content.classList.remove('active');
       });
 
@@ -590,9 +756,9 @@ function setupTabs() {
 }
 
 function setupEvents() {
-  filterBtns.forEach(btn => {
+  filterBtns.forEach((btn) => {
     btn.addEventListener('click', () => {
-      filterBtns.forEach(b => b.classList.remove('active'));
+      filterBtns.forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       const r = btn.dataset.range;
       if (r === 'custom') return;
@@ -604,15 +770,25 @@ function setupEvents() {
   applyQuickRange('today');
 
   exportCafeBtn.addEventListener('click', () => {
-    if (!cafeOrders.length) return alert('No Café transactions to export for this period.');
+    if (!cafeOrders.length)
+      return alert('No Café transactions to export for this period.');
     const csv = toCSV(cafeOrders);
-    download(`cafe-transactions-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    download(
+      `cafe-transactions-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv
+    );
   });
 
   exportSuppBtn.addEventListener('click', () => {
-    if (!suppOrders.length) return alert('No Supplements transactions to export for this period.');
+    if (!suppOrders.length)
+      return alert(
+        'No Supplements transactions to export for this period.'
+      );
     const csv = toCSV(suppOrders);
-    download(`supp-transactions-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+    download(
+      `supp-transactions-${new Date().toISOString().slice(0, 10)}.csv`,
+      csv
+    );
   });
 
   expenseForm.addEventListener('submit', async (e) => {
@@ -620,7 +796,7 @@ function setupEvents() {
     const payload = {
       description: expDescEl.value.trim(),
       amount: parseFloat(expAmountEl.value),
-      category: (expCategoryEl.value || '').trim() || null
+      category: (expCategoryEl.value || '').trim() || null,
     };
     if (!payload.description || isNaN(payload.amount)) return;
 

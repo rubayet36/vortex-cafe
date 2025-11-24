@@ -1,10 +1,10 @@
-const SUPABASE_URL = 'https://ybrdqxetprlhscfuebyy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicmRxeGV0cHJsaHNjZnVlYnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MTg2NjksImV4cCI6MjA3NzQ5NDY2OX0.N7pxPNmi1ZowVd9Nik9KABhqTtp3NP-XlEcEiNlJ-8M';
+const SUPABASE_URL = 'https://ovxxnsrqzdlyzdmubwaw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92eHhuc3JxemRseXpkbXVid2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzY4MTgsImV4cCI6MjA3OTU1MjgxOH0.uwU9aQGbUO7OEv4HI8Rtq7awANWNubt3yJTSUMZRAJU';
 
 const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let allMenuItems = [];
-const categories = ['All', 'Smoothies', 'Protein Bowls', 'Meals', 'Snacks', 'Supplements'];
+const categories = ['All', 'Smoothies', 'Coffee', 'Juice', 'Supplements'];
 const dietaryFilters = ['All Dietary Options', 'Vegan', 'Vegetarian', 'Gluten-Free', 'High-Protein', 'Low-Carb'];
 let cart = [];
 let currentFilter = {

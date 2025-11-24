@@ -1,6 +1,8 @@
-// login.js — LOGIN USING CUSTOM USERS TABLE (PLAIN TEXT PASSWORDS)
+// Import from your specific setup file
+const SUPABASE_URL = 'https://ovxxnsrqzdlyzdmubwaw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92eHhuc3JxemRseXpkbXVid2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzY4MTgsImV4cCI6MjA3OTU1MjgxOH0.uwU9aQGbUO7OEv4HI8Rtq7awANWNubt3yJTSUMZRAJU';
 
-import { supabase } from "./supabaseClient.js";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Fetch user by email
+    // 1. Search for the user in your custom table
     const { data: users, error } = await supabase
       .from("users")
       .select("*")
@@ -27,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .limit(1);
 
     if (error) {
-      console.error(error);
-      alert("Database error. Try again.");
+      console.error("Database Error:", error);
+      alert("Something went wrong connecting to the database.");
       return;
     }
 
@@ -39,16 +41,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const user = users[0];
 
-    // Compare plain text password
-    if (user.password_hash !== password) {
+    // 2. Check the plain text password directly
+    // Note: 'user.password' comes from the database column we created in Step 1
+    if (user.password !== password) {
       alert("Incorrect password.");
       return;
     }
 
-    // Login success
+    // 3. Login success - Handle Redirects
     alert("Login successful!");
 
-    // Redirect based on email or create a role field later
+    // Store a simple session marker (optional, for simple page protection)
+    localStorage.setItem("vortex_user", JSON.stringify(user));
+
     if (user.email === "mahin@mail.com") {
       window.location.href = "owner-dashboard.html";
     } else if (user.email === "admin@mail.com") {

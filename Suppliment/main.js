@@ -1,6 +1,6 @@
 // main.js
 import { $, icons } from "./utils.js";
-import { state, emitRerender, setView } from "./state.js";
+import { state, emitRerender } from "./state.js";
 import { renderHeader, mountHeader } from "./header.js";
 import { renderFooter, mountFooter } from "./footer.js";
 import { renderCart, mountCart } from "./cart.js";
@@ -12,66 +12,79 @@ import { ALL_PRODUCTS } from "./data.js";
 
 // Supabase (ESM)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-const SUPABASE_URL = "https://ybrdqxetprlhscfuebyy.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicmRxeGV0cHJsaHNjZnVlYnl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MTg2NjksImV4cCI6MjA3NzQ5NDY2OX0.N7pxPNmi1ZowVd9Nik9KABhqTtp3NP-XlEcEiNlJ-8M";
+const SUPABASE_URL = 'https://ovxxnsrqzdlyzdmubwaw.supabase.co';
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92eHhuc3JxemRseXpkbXVid2F3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NzY4MTgsImV4cCI6MjA3OTU1MjgxOH0.uwU9aQGbUO7OEv4HI8Rtq7awANWNubt3yJTSUMZRAJU';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ---------- Render roots ---------- */
+
 function renderHeaderRoot() {
   const mount = $("#header-root");
+  if (!mount) return;
   mount.innerHTML = renderHeader();
   mountHeader(mount);
+  // ensure lucide icons are wired up
   icons();
 }
+
 function renderFooterRoot() {
   const mount = $("#footer-root");
+  if (!mount) return;
   mount.innerHTML = renderFooter();
-  mountFooter();
+  // pass mount so footer can attach handlers safely
+  mountFooter(mount);
 }
+
 function renderCartRoot() {
   const mount = $("#cart-root");
+  if (!mount) return;
+
   mount.innerHTML = renderCart();
 
-  // IMPORTANT: toggle the outer root's 'open' class so CSS pointer-events work.
-  // When the root has `open`, clicks and pointer events inside the cart become active.
-  mount.classList.toggle("open", state.isCartOpen);
+  // toggle the root's 'open' class so CSS pointer-events work properly
+  mount.classList.toggle("open", !!state.isCartOpen);
 
-  // pass the mount node so mountCart can scope queries to it
+  // scope all cart events to this mount
   mountCart(mount);
 }
 
-
 /* ---------- App shell ---------- */
+
 function renderApp() {
   renderHeaderRoot();
-  renderCartRoot(); // ensure fresh cart each render
+  renderCartRoot();
 
   const app = $("#app");
-  if (state.currentView === "home") {
-    app.innerHTML = viewHome();
-    mountHome(app);
-  } else if (state.currentView === "catalog") {
+  if (!app) return;
+
+  if (state.currentView === "catalog") {
     app.innerHTML = viewCatalog();
     mountCatalog(app);
   } else if (state.currentView === "product-detail") {
     app.innerHTML = viewProductDetail();
     mountProductDetail(app);
   } else if (state.currentView === "quiz") {
-    // render the quiz wrapper (standalone quiz page)
     app.innerHTML = `<div class="pt-24">${viewQuizWrapper()}</div>`;
     mountQuiz(app);
+  } else {
+    // default to home
+    app.innerHTML = viewHome();
+    mountHome(app);
   }
 
   renderFooterRoot();
 }
 
 /* ---------- Data load ---------- */
+
 async function loadPortalProducts() {
-  // Start with ALL_PRODUCTS as fallback so products are visible immediately
-  state.products = [...ALL_PRODUCTS];
-  emitRerender();
-  
+  // show something immediately using fallback static data
+  if (!state.products || state.products.length === 0) {
+    state.products = [...ALL_PRODUCTS];
+    emitRerender();
+  }
+
   try {
     const { data, error } = await supabase
       .from("supplement_products")
@@ -84,7 +97,7 @@ async function loadPortalProducts() {
       return;
     }
 
-    const mapped = (data || []).map(p => ({
+    const mapped = (data || []).map((p) => ({
       id: String(p.id),
       name: p.name,
       brand: p.brand || "—",
@@ -94,16 +107,19 @@ async function loadPortalProducts() {
       originalPrice: p.compare_at_price ? Number(p.compare_at_price) : null,
       rating: p.rating ? Number(p.rating) : 0,
       reviews: 0,
-      image: p.image_url || "https://via.placeholder.com/600x600?text=Supplement",
+      image:
+        p.image_url ||
+        "https://via.placeholder.com/600x600?text=Supplement",
       isBestseller: !!p.is_featured,
       isNew: false,
       stock: typeof p.stock === "number" ? p.stock : 0,
       description: p.description || "",
-      tags: p.tags || ""
+      tags: p.tags || "",
     }));
 
+    // keep ALL_PRODUCTS in sync
     ALL_PRODUCTS.length = 0;
-    mapped.forEach(x => ALL_PRODUCTS.push(x));
+    mapped.forEach((x) => ALL_PRODUCTS.push(x));
     state.products = [...mapped];
 
     emitRerender();
@@ -113,6 +129,7 @@ async function loadPortalProducts() {
 }
 
 /* ---------- Checkout flow ---------- */
+
 async function onCheckoutClicked() {
   if (!Array.isArray(state.cart) || state.cart.length === 0) {
     alert("Your cart is empty.");
@@ -127,24 +144,27 @@ async function onCheckoutClicked() {
     }
   }
 
-  // Show styled checkout form
   showCheckoutForm();
 }
 
 /* ---------- Styled Checkout Form ---------- */
+
 function showCheckoutForm() {
-  const subtotal = state.cart.reduce((s, it) => s + it.price * it.quantity, 0);
+  // avoid stacking multiple overlays if user clicks checkout repeatedly
+  if (document.getElementById("checkout-overlay")) return;
+
+  const subtotal = state.cart.reduce(
+    (s, it) => s + Number(it.price) * Number(it.quantity),
+    0
+  );
   const shipping = 0;
   const total = subtotal + shipping;
 
-  const overlay = document.createElement('div');
-  overlay.id = 'checkout-overlay';
+  const overlay = document.createElement("div");
+  overlay.id = "checkout-overlay";
   overlay.style.cssText = `
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.7);
     z-index: 999;
     display: flex;
@@ -185,7 +205,7 @@ function showCheckoutForm() {
 
         <div style="display: flex; gap: 12px;">
           <button type="button" id="cancel-checkout" style="flex: 1; padding: 12px 16px; background: #374151; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">Cancel</button>
-          <button type="submit" style="flex: 1; padding: 12px 16px; background: linear-gradient(to right, #06b6d4, #3b82f6); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; transform: scale(1);" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">Place Order</button>
+          <button type="submit" style="flex: 1; padding: 12px 16px; background: linear-gradient(to right, #06b6d4, #3b82f6); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s;">Place Order</button>
         </div>
       </form>
     </div>
@@ -193,24 +213,24 @@ function showCheckoutForm() {
 
   document.body.appendChild(overlay);
 
-  const form = overlay.querySelector('#checkout-form');
-  const cancelBtn = overlay.querySelector('#cancel-checkout');
-  const nameInput = overlay.querySelector('#customer-name');
-  const phoneInput = overlay.querySelector('#customer-phone');
+  const form = overlay.querySelector("#checkout-form");
+  const cancelBtn = overlay.querySelector("#cancel-checkout");
+  const nameInput = overlay.querySelector("#customer-name");
+  const phoneInput = overlay.querySelector("#customer-phone");
 
-  cancelBtn.addEventListener('click', () => {
+  cancelBtn.addEventListener("click", () => {
     overlay.remove();
   });
 
-  overlay.addEventListener('click', (e) => {
+  overlay.addEventListener("click", (e) => {
     if (e.target === overlay) overlay.remove();
   });
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const customer_name = nameInput.value.trim() || "Walk-in";
     const customer_phone = phoneInput.value.trim() || "";
-    
+
     overlay.remove();
     await processCheckout(customer_name, customer_phone);
   });
@@ -218,75 +238,103 @@ function showCheckoutForm() {
   nameInput.focus();
 }
 
+/* ---------- Process checkout + DB ---------- */
+
 async function processCheckout(customer_name, customer_phone) {
-  const subtotal = state.cart.reduce((s, it) => s + it.price * it.quantity, 0);
+  const subtotal = state.cart.reduce(
+    (s, it) => s + Number(it.price) * Number(it.quantity),
+    0
+  );
   const shipping = 0;
   const total_amount = subtotal + shipping;
 
-  // 1) Create supplement order (Pending)
-  const { data: orderRow, error: orderErr } = await supabase
-    .from("supplement_orders")
-    .insert([{
-      customer_name,
-      customer_phone,
-      total_amount,
-      status: "Pending"
-    }])
-    .select("*")
-    .single();
+  try {
+    // 1) Create supplement order (Pending)
+    const { data: orderRow, error: orderErr } = await supabase
+      .from("supplement_orders")
+      .insert([
+        {
+          customer_name,
+          customer_phone,
+          total_amount,
+          status: "Pending",
+        },
+      ])
+      .select("*")
+      .single();
 
-  if (orderErr || !orderRow) {
-    console.error(orderErr);
-    alert("Checkout failed (order).");
-    return;
-  }
-
-  const orderId = orderRow.id;
-
-  // 2) Items + decrement stock
-  for (const it of state.cart) {
-    const productId = it.id;
-    const { error: itemErr } = await supabase
-      .from("supplement_order_items")
-      .insert([{
-        order_id: orderId,
-        supplement_product_id: productId,
-        quantity: it.quantity,
-        price_at_order: it.price,
-        item_name: it.name
-      }]);
-    if (itemErr) {
-      console.error(itemErr);
-      alert("Checkout failed (item).");
+    if (orderErr || !orderRow) {
+      console.error(orderErr);
+      alert("Checkout failed (order).");
       return;
     }
 
-    // decrement stock
-    try {
-      await supabase.rpc("decrement_supplement_stock", { p_id: productId, p_qty: it.quantity });
-    } catch {}
-    await supabase
-      .from("supplement_products")
-      .update({ stock: Number(it.stock ?? 0) - it.quantity })
-      .eq("id", productId);
+    const orderId = orderRow.id;
+
+    // 2) Items + decrement stock
+    for (const it of state.cart) {
+      const productId = it.id;
+
+      const { error: itemErr } = await supabase
+        .from("supplement_order_items")
+        .insert([
+          {
+            order_id: orderId,
+            supplement_product_id: productId,
+            quantity: it.quantity,
+            price_at_order: it.price,
+            item_name: it.name,
+          },
+        ]);
+
+      if (itemErr) {
+        console.error(itemErr);
+        alert("Checkout failed (item).");
+        return;
+      }
+
+      // Decrement stock via RPC (if exists) but don't crash if it fails
+      try {
+        await supabase.rpc("decrement_supplement_stock", {
+          p_id: productId,
+          p_qty: it.quantity,
+        });
+      } catch (rpcErr) {
+        console.warn("RPC decrement_supplement_stock error:", rpcErr);
+      }
+
+      // Update stock column as fallback
+      try {
+        await supabase
+          .from("supplement_products")
+          .update({ stock: Number(it.stock ?? 0) - it.quantity })
+          .eq("id", productId);
+      } catch (updErr) {
+        console.warn("Stock update error:", updErr);
+      }
+    }
+
+    // 3) Clear cart + reload products
+    state.cart = [];
+    state.isCartOpen = false;
+    emitRerender();
+    await loadPortalProducts();
+
+    alert("Order placed! Waiting for staff confirmation.");
+  } catch (err) {
+    console.error("processCheckout error:", err);
+    alert("Unexpected error during checkout. Please try again.");
   }
-
-  // 3) Clear cart + reload products
-  state.cart = [];
-  state.isCartOpen = false;
-  emitRerender();
-  await loadPortalProducts();
-
-  alert("Order placed! Waiting for staff confirmation.");
 }
 
 /* ---------- Events & boot ---------- */
+
 document.addEventListener("DOMContentLoaded", async () => {
   renderApp();
   await loadPortalProducts();
 });
 
-// re-render everywhere
+// re-render everywhere when state changes
 window.addEventListener("app:rerender", renderApp);
 
 // central checkout listener (fired from cart.js)
